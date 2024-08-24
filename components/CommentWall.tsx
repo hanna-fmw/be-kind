@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import Comment from '@/components/Comment'
 
 type Comment = {
@@ -8,19 +9,40 @@ type Comment = {
 	name: string
 	text: string
 	color: string
+	created_at: string
 }
 
 export default function CommentWall() {
 	const [comments, setComments] = useState<Comment[]>([])
 
 	useEffect(() => {
-		// Fetch comments from API or local storage
-		// For now, we'll use dummy data
-		setComments([
-			{ id: 1, name: 'Alice', text: 'Alice is always helpful!', color: 'bg-yellow-200' },
-			{ id: 2, name: 'Bob', text: 'Bob has a great sense of humor!', color: 'bg-green-200' },
-		])
+		fetchComments()
+
+		const subscription = supabase
+			.channel('public:comments')
+			.on(
+				'postgres_changes',
+				{ event: 'INSERT', schema: 'public', table: 'comments' },
+				(payload) => {
+					setComments((prevComments) => [...prevComments, payload.new as Comment])
+				}
+			)
+			.subscribe()
+
+		return () => {
+			subscription.unsubscribe()
+		}
 	}, [])
+
+	async function fetchComments() {
+		const { data, error } = await supabase
+			.from('comments')
+			.select('*')
+			.order('created_at', { ascending: false })
+
+		if (error) console.error('Error fetching comments:', error)
+		else setComments(data || [])
+	}
 
 	return (
 		<div className='relative w-full h-[600px] border border-gray-300 rounded-lg overflow-hidden'>

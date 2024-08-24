@@ -1,22 +1,34 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import friends from '@/data/friends.json'
+
+const friends = ['Alice', 'Bob', 'Charlie', 'David', 'Eve'] // Add more names as needed
+
+function getRandomColor() {
+	const colors = ['bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200']
+	return colors[Math.floor(Math.random() * colors.length)]
+}
 
 export default function CommentForm() {
+	const router = useRouter()
 	const [friend, setFriend] = useState(getRandomFriend())
 	const [comment, setComment] = useState('')
-	const router = useRouter()
 
 	function getRandomFriend() {
 		return friends[Math.floor(Math.random() * friends.length)]
 	}
 
-	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault()
-		// TODO: Save comment to API or local storage
-		console.log('Submitted:', { friend, comment })
+		const { data, error } = await supabase
+			.from('comments')
+			.insert({ name: friend, text: comment, color: getRandomColor() })
+
+		if (error) console.error('Error inserting comment:', error)
+		else console.log('Comment added:', data)
+
 		setComment('')
 		setFriend(getRandomFriend())
 	}

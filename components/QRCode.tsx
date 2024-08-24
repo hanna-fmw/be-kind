@@ -1,10 +1,9 @@
-import Image from 'next/image'
+import QRCode from 'react-qr-code'
 
-export default function QRCode() {
-	return (
-		<div className='mb-8'>
-			<Image src='/qr-code.png' alt='QR Code' width={200} height={200} />
-			<p className='text-center mt-2'>Scan to add a comment</p>
-		</div>
-	)
+interface QRCodeProps {
+	value: string
+}
+
+export default function QRCodeComponent({ value }: QRCodeProps) {
+	return <QRCode value={value} />
 }
